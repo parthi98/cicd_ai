@@ -43,8 +43,7 @@ def analyze_logs(log_file_path):
     
     # Passing the API key via the exact X-goog-api-key header from your curl request
     headers = {
-        "Content-Type": "application/json",
-        "X-goog-api-key": api_key
+        "Content-Type": "application/json"
     }
     
     payload = {
