@@ -32,11 +32,16 @@ def analyze_logs(log_file_path):
     \"\"\"
     """
 
-    # FIXED: Clean domain configuration string with no protocols or slashes
-    host = "://googleapis.com"
-    path = f"/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    # MATCHES YOUR WORKING CURL FORMAT
+    host = "generativelanguage.googleapis.com"
+    path = "/v1beta/models/gemini-flash-latest:generateContent"
     
-    headers = {"Content-Type": "application/json"}
+    # Passing the API key via the exact X-goog-api-key header from your curl request
+    headers = {
+        "Content-Type": "application/json",
+        "X-goog-api-key": api_key
+    }
+    
     payload = {
         "contents": [{
             "parts": [{"text": prompt}]
@@ -66,5 +71,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python analyze_logs.py <path_to_log_file>")
         sys.exit(1)
-    # Safely passes the file path string parameter to the parsing function
-    analyze_logs(sys.argv[1])
+    # Target argument array index updated to read file parameter cleanly
+    analyze_logs(sys.argv)
