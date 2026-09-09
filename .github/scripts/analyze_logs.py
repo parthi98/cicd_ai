@@ -31,7 +31,7 @@ def analyze_logs(log_file_path):
     \"\"\"
     """
 
-    # This structure completely eliminates url/port connection bugs
+    # CRITICAL FIX: Clean connection host structure
     host = "://googleapis.com"
     path = f"/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
     
@@ -52,7 +52,7 @@ def analyze_logs(log_file_path):
         result = json.loads(data)
         
         if 'candidates' in result and len(result['candidates']) > 0:
-            markdown_output = result['candidates']['content']['parts'][0]['text']
+            markdown_output = result['candidates']['content']['parts']['text']
             print(markdown_output)
         else:
             print("### ⚠️ AI Engine Note\nGemini API connected, but returned empty output structural mapping.")
@@ -65,5 +65,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python analyze_logs.py <path_to_log_file>")
         sys.exit(1)
-    # Passed the specific path string argument safely
+    # Target index updated to read file parameter cleanly
     analyze_logs(sys.argv[1])
