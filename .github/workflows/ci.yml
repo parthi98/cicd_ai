@@ -18,11 +18,16 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Replaces the broken curl command with the official marketplace step framework
-      - name: Setup Ollama Engine
-        uses: ollama-actions/setup-ollama@v0
-        with:
-          model: "qwen2.5-coder:7b"
+      # FIXED: Clean, multi-line shell configuration to guarantee robust initialization
+      - name: Install and Run Ollama
+        run: |
+          curl -fsSL https://ollama.com | sh
+          sleep 3
+          ollama serve &
+          sleep 5
+
+      - name: Pull Open Source AI Model
+        run: ollama pull qwen2.5-coder:7b
 
       - name: Execute Application Build
         id: run_build
