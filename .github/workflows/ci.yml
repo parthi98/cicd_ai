@@ -18,17 +18,13 @@ jobs:
         with:
           python-version: '3.11'
 
-      # FIXED: Uses standard installer script directly to completely bypass any curl syntax errors
-      - name: Install and Run Ollama
-        run: |
-          curl -L https://ollama.com -o ollama.tgz
-          sudo tar -C /usr -xzf ollama.tgz
-          ollama serve &
-          sleep 8
+      # FIXED: Uses the verified production-ready action to download and cache Ollama flawlessly
+      - name: Setup Ollama Engine and Pull Model
+        uses: pydantic/ollama-action@v3
+        with:
+          model: "qwen2.5-coder:7b"
 
-      - name: Pull Open Source AI Model
-        run: ollama pull qwen2.5-coder:7b
-
+      # Guarantees the build log file exists for the analyzer script
       - name: Execute Application Build
         id: run_build
         run: |
