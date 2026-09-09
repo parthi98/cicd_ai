@@ -21,10 +21,13 @@ jobs:
       # IMPORTANT: Change 'npm run build' to whatever your actual build command is!
       - name: Execute Application Build
         id: run_build
+        # REPLACE 'your-subfolder-name' WITH THE ACTUAL NAME OF YOUR FOLDER (e.g., app, frontend)
+        working-directory: ./your-subfolder-name
         run: |
           echo "Starting application build..."
           npm run build 2>&1 | tee build_output.log
-        continue-on-error: true # Prevents the workflow from stopping immediately if the build fails
+        continue-on-error: true
+
 
       - name: Install AI Engine Dependencies
         run: pip install openai
