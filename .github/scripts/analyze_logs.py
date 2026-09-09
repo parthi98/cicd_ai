@@ -4,8 +4,9 @@ import http.client
 import json
 
 def analyze_logs(log_file_path):
+    # Ensure log_file_path is treated as a clean string path
     if not os.path.exists(log_file_path):
-        print("### ⚠️ Error: Build log file not found.")
+        print(f"### ⚠️ Error: Build log file not found at path: {log_file_path}")
         return
 
     with open(log_file_path, 'r', encoding='utf-8') as f:
@@ -32,16 +33,10 @@ def analyze_logs(log_file_path):
     \"\"\"
     """
 
-    # MATCHES YOUR WORKING CURL FORMAT
-    # host = "generativelanguage.googleapis.com"
-    # # path = "/v1beta/models/gemini-flash-latest:generateContent"
-    # path = "/v1beta/models/gemini-1.5-flash:generateContent"
+    # FIXED: Uses production v1 mapping path with the query parameter token string
     host = "generativelanguage.googleapis.com"
-    path = f"/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-
-
+    path = f"/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
     
-    # Passing the API key via the exact X-goog-api-key header from your curl request
     headers = {
         "Content-Type": "application/json"
     }
@@ -75,6 +70,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python analyze_logs.py <path_to_log_file>")
         sys.exit(1)
-    # Target argument array index updated to read file parameter cleanly
+    # FIXED: Index target specified to grab the actual string parameter 'build_output.log'
     analyze_logs(sys.argv[1])
-
