@@ -32,7 +32,7 @@ def analyze_logs(log_file_path):
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o", # You can use gpt-4o-mini to save costs
+            model="gpt-5.4-mini", # You can use gpt-4o-mini to save costs
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2
         )
