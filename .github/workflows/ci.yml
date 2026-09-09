@@ -18,7 +18,18 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Runs actual package verification and saves the processing logs
+      # Install Ollama to handle open source models locally
+      - name: Install Ollama
+        run: |
+          curl -fsSL https://ollama.com | sh
+          # Start the Ollama background engine service
+          ollama serve & 
+          sleep 5
+
+      # Download your chosen open source model (llama3.3 or qwen2.5-coder)
+      - name: Pull Open Source AI Model
+        run: ollama pull qwen2.5-coder:7b
+
       - name: Execute Application Build
         id: run_build
         run: |
@@ -26,10 +37,8 @@ jobs:
           pip install -r requirements.txt 2>&1 | tee build_output.log
         continue-on-error: true
 
-      - name: Run GenAI Log Optimization Agent
+      - name: Run Open Source Log Optimization Agent
         if: always()
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python .github/scripts/analyze_logs.py build_output.log > ai_suggestions.md
           cat ai_suggestions.md >> $GITHUB_STEP_SUMMARY
