@@ -26,15 +26,20 @@ jobs:
           ollama serve & 
           sleep 5
 
-      # Download your chosen open source model (llama3.3 or qwen2.5-coder)
+      # Download your chosen open source model
       - name: Pull Open Source AI Model
         run: ollama pull qwen2.5-coder:7b
 
       - name: Execute Application Build
         id: run_build
         run: |
-          echo "Starting application build dependency validation..."
-          pip install -r requirements.txt 2>&1 | tee build_output.log
+          echo "Starting application build dependency validation..." > build_output.log
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt 2>&1 | tee -a build_output.log
+          else
+            echo "ERROR: Could not open requirements.txt: [Errno 2] No such file or directory: 'requirements.txt'" >> build_output.log
+          fi
+          cat build_output.log
         continue-on-error: true
 
       - name: Run Open Source Log Optimization Agent
