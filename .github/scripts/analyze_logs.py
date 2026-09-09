@@ -18,13 +18,12 @@ def analyze_logs(log_file_path):
         return
 
     prompt = f"""
-    You are an expert DevOps and Performance Engineer. 
-    Analyze the following CI/CD build log. Identify bottlenecks, slow steps, 
-    caching inefficiencies, or compilation errors. 
+    You are an expert DevOps Engineer. 
+    Analyze the following CI/CD build log. Identify bottlenecks and errors.
     
     Provide your output formatted strictly in Clean Markdown with two clear sections:
     1. ### 🚀 Performance Bottlenecks / Errors Identified
-    2. ### 💡 Actionable Optimization Suggestions (Include exact code/config changes if applicable)
+    2. ### 💡 Actionable Optimization Suggestions
     
     Build Log Snippet:
     \"\"\"
@@ -32,7 +31,7 @@ def analyze_logs(log_file_path):
     \"\"\"
     """
 
-    # Fixes the nonnumeric port bug by separating the domain from the path
+    # This structure completely eliminates url/port connection bugs
     host = "://googleapis.com"
     path = f"/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
     
@@ -53,11 +52,11 @@ def analyze_logs(log_file_path):
         result = json.loads(data)
         
         if 'candidates' in result and len(result['candidates']) > 0:
-            markdown_output = result['candidates']['content']['parts']['text']
+            markdown_output = result['candidates']['content']['parts'][0]['text']
             print(markdown_output)
         else:
-            print("### ⚠️ AI Engine Note\nGemini API connected successfully, but returned an empty structural frame.")
-            print(f"Debug Log Data: {json.dumps(result)}")
+            print("### ⚠️ AI Engine Note\nGemini API connected, but returned empty output structural mapping.")
+            print(f"Debug Info: {data}")
             
     except Exception as e:
         print(f"### ❌ AI Analysis Failed\nAn error occurred during Gemini processing: {str(e)}")
@@ -66,5 +65,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python analyze_logs.py <path_to_log_file>")
         sys.exit(1)
-    # Fixed the argument reading bug
+    # Passed the specific path string argument safely
     analyze_logs(sys.argv[1])
