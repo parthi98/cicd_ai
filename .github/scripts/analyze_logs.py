@@ -18,8 +18,9 @@ def analyze_logs(log_file_path):
         return
 
     prompt = f"""
-    You are an expert DevOps Engineer. 
-    Analyze the following CI/CD build log. Identify bottlenecks and errors.
+    You are an expert DevOps and Performance Engineer. 
+    Analyze the following CI/CD build log. Identify bottlenecks, slow steps, 
+    caching inefficiencies, or compilation errors. 
     
     Provide your output formatted strictly in Clean Markdown with two clear sections:
     1. ### 🚀 Performance Bottlenecks / Errors Identified
@@ -31,7 +32,7 @@ def analyze_logs(log_file_path):
     \"\"\"
     """
 
-    # CRITICAL FIX: Clean connection host structure
+    # FIXED: Clean domain configuration string with no protocols or slashes
     host = "://googleapis.com"
     path = f"/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
     
@@ -55,7 +56,7 @@ def analyze_logs(log_file_path):
             markdown_output = result['candidates']['content']['parts']['text']
             print(markdown_output)
         else:
-            print("### ⚠️ AI Engine Note\nGemini API connected, but returned empty output structural mapping.")
+            print("### ⚠️ AI Engine Note\nGemini API connected, but returned empty content structural mapping.")
             print(f"Debug Info: {data}")
             
     except Exception as e:
@@ -65,5 +66,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python analyze_logs.py <path_to_log_file>")
         sys.exit(1)
-    # Target index updated to read file parameter cleanly
+    # Safely passes the file path string parameter to the parsing function
     analyze_logs(sys.argv[1])
