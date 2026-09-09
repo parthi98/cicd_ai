@@ -33,9 +33,12 @@ def analyze_logs(log_file_path):
     """
 
     # MATCHES YOUR WORKING CURL FORMAT
+    # host = "generativelanguage.googleapis.com"
+    # # path = "/v1beta/models/gemini-flash-latest:generateContent"
+    # path = "/v1beta/models/gemini-1.5-flash:generateContent"
     host = "generativelanguage.googleapis.com"
-    # path = "/v1beta/models/gemini-flash-latest:generateContent"
-    path = "/v1beta/models/gemini-1.5-flash:generateContent"
+    path = f"/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+
 
     
     # Passing the API key via the exact X-goog-api-key header from your curl request
