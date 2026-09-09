@@ -72,4 +72,5 @@ if __name__ == "__main__":
         print("Usage: python analyze_logs.py <path_to_log_file>")
         sys.exit(1)
     # Target argument array index updated to read file parameter cleanly
-    analyze_logs(sys.argv)
+    analyze_logs(sys.argv[1])
+
