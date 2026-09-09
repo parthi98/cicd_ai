@@ -29,8 +29,8 @@ jobs:
         continue-on-error: true
 
 
-      - name: Install AI Engine Dependencies
-        run: pip install openai
+      # - name: Install AI Engine Dependencies
+      #   run: pip install openai
 
       - name: Run GenAI Log Optimization Agent
         if: always()
