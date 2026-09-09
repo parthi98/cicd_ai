@@ -18,17 +18,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      # FIXED: Correct target setup script URL path mapping
-      - name: Install Ollama
-        run: |
-          curl -fsSL https://ollama.com | sh
-          # Start the Ollama background engine service
-          ollama serve & 
-          sleep 5
-
-      # Download your chosen open source model
-      - name: Pull Open Source AI Model
-        run: ollama pull qwen2.5-coder:7b
+      # Replaces the broken curl command with the official marketplace step framework
+      - name: Setup Ollama Engine
+        uses: ollama-actions/setup-ollama@v0
+        with:
+          model: "qwen2.5-coder:7b"
 
       - name: Execute Application Build
         id: run_build
