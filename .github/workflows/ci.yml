@@ -1,0 +1,44 @@
+name: CI Build with AI Optimization
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # IMPORTANT: Change 'npm run build' to whatever your actual build command is!
+      - name: Execute Application Build
+        id: run_build
+        run: |
+          echo "Starting application build..."
+          npm run build 2>&1 | tee build_output.log
+        continue-on-error: true # Prevents the workflow from stopping immediately if the build fails
+
+      - name: Install AI Engine Dependencies
+        run: pip install openai
+
+      - name: Run GenAI Log Optimization Agent
+        if: always() # Ensures AI runs even if the previous build step failed
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python .github/scripts/analyze_logs.py build_output.log > ai_suggestions.md
+          # This line injects the Markdown directly into the GitHub Actions UI Summary page
+          cat ai_suggestions.md >> $GITHUB_STEP_SUMMARY
+
+      # This final step ensures the workflow badge shows red if the actual build failed
+      - name: Check Build Status
+        if: steps.run_build.outcome == 'failure'
+        run: exit 1
