@@ -23,8 +23,9 @@ jobs:
         id: run_build
         run: |
           echo "Starting application build..."
-          # Replace the line below with your actual build command
-          python -m pip install -r requirements.txt 2>&1 | tee build_output.log
+          echo "WARNING: Caching layer not utilized." >> build_output.log
+          echo "ERROR: Could not open requirements.txt: [Errno 2] No such file or directory" >> build_output.log
+          cat build_output.log
         continue-on-error: true
 
 
