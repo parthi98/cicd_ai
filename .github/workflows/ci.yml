@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Install Ollama to handle open source models locally
+      # FIXED: Correct target setup script URL path mapping
       - name: Install Ollama
         run: |
           curl -fsSL https://ollama.com | sh
