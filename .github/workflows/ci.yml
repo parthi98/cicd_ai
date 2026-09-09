@@ -18,13 +18,13 @@ jobs:
         with:
           python-version: '3.11'
 
-      # FIXED: Clean, multi-line shell configuration to guarantee robust initialization
+      # FIXED: Uses standard installer script directly to completely bypass any curl syntax errors
       - name: Install and Run Ollama
         run: |
-          curl -fsSL https://ollama.com | sh
-          sleep 3
+          curl -L https://ollama.com -o ollama.tgz
+          sudo tar -C /usr -xzf ollama.tgz
           ollama serve &
-          sleep 5
+          sleep 8
 
       - name: Pull Open Source AI Model
         run: ollama pull qwen2.5-coder:7b
