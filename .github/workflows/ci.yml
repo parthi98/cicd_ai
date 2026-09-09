@@ -30,13 +30,13 @@ jobs:
         run: pip install openai
 
       - name: Run GenAI Log Optimization Agent
-        if: always() # Ensures AI runs even if the previous build step failed
+        if: always()
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python .github/scripts/analyze_logs.py build_output.log > ai_suggestions.md
-          # This line injects the Markdown directly into the GitHub Actions UI Summary page
           cat ai_suggestions.md >> $GITHUB_STEP_SUMMARY
+
 
       # This final step ensures the workflow badge shows red if the actual build failed
       - name: Check Build Status
