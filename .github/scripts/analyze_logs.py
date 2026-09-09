@@ -1,6 +1,7 @@
 import sys
 import os
-from openai import OpenAI
+import http.client
+import json
 
 def analyze_logs(log_file_path):
     if not os.path.exists(log_file_path):
@@ -9,12 +10,14 @@ def analyze_logs(log_file_path):
 
     with open(log_file_path, 'r', encoding='utf-8') as f:
         log_lines = f.readlines()
-        # Grab the last 500 lines to prevent hitting AI token limits
         log_content = "".join(log_lines[-500:])
 
-    # The library automatically looks for the OPENAI_API_KEY env variable
-    client = OpenAI()
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        print("### ❌ Error: GEMINI_API_KEY environment variable is missing.")
+        return
 
+    # Prompt configuration for the DevOps report
     prompt = f"""
     You are an expert DevOps and Performance Engineer. 
     Analyze the following CI/CD build log. Identify bottlenecks, slow steps, 
@@ -30,15 +33,30 @@ def analyze_logs(log_file_path):
     \"\"\"
     """
 
+    # Using standard libraries to avoid external dependency issues in the runner
+    host = "://googleapis.com"
+    url = f"/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "contents": [{
+            "parts": [{"text": prompt}]
+        }]
+    }
+
     try:
-        response = client.chat.completions.create(
-            model="gpt-5.4-mini", # You can use gpt-4o-mini to save costs
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2
-        )
-        print(response.choices.message.content)
+        conn = http.client.HTTPSConnection(host)
+        conn.request("POST", url, body=json.dumps(payload), headers=headers)
+        response = conn.getresponse()
+        data = response.read().decode("utf-8")
+        conn.close()
+
+        result = json.loads(data)
+        # Extract markdown text from Gemini response structure
+        markdown_output = result['candidates'][0]['content']['parts'][0]['text']
+        print(markdown_output)
     except Exception as e:
-        print(f"### ❌ AI Analysis Failed\nAn error occurred: {str(e)}")
+        print(f"### ❌ AI Analysis Failed\nAn error occurred during Gemini processing: {str(e)}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
