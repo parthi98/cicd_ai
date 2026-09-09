@@ -35,7 +35,7 @@ def analyze_logs(log_file_path):
 
     # FIXED: Uses production v1 mapping path with the query parameter token string
     host = "generativelanguage.googleapis.com"
-    path = f"/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
+    path = f"/v1/models/gemini-2.5-flash:generateContent?key={api_key}"
     
     headers = {
         "Content-Type": "application/json"
