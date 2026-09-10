@@ -22,6 +22,7 @@ jobs:
         with:
           python-version: '3.11'
 
+      # Creates output log framework cleanly for analysis
       - name: Compile and Verify Dependencies
         id: run_build
         run: |
@@ -58,72 +59,59 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Download the captured logs from Stage 1
       - name: Download Build Log Telemetry
         uses: actions/download-artifact@v4
         with:
           name: build-log-artifact
 
-      # Launch isolated local open source AI server engine
       - name: Initialize Dockerized Ollama Engine
         run: |
           docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
           sleep 5
           docker exec ollama ollama pull qwen2.5-coder:7b
 
-      # Process analysis logs locally via containerized qwen agent
+      # Analyzes the logs completely free inside the runner frame
       - name: Execute Open Source Log Optimization Agent
         run: |
           python .github/scripts/analyze_logs.py build_output.log > ai_suggestions.md
           cat ai_suggestions.md >> $GITHUB_STEP_SUMMARY
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 3: APPLICATION HEALTH VERIFICATION
+  # STAGE 3: APPLICATION HEALTH VERIFICATION (DOCKER CAPTURE)
   # ─────────────────────────────────────────────────────────────
   run-app-test:
     name: "Stage 3: App Smoke Verification"
     runs-on: ubuntu-latest
-    needs: ai-analysis # Stage 3 fires only after Stage 2 analysis is complete
+    needs: ai-analysis
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Python Environment
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      # Installs minimal dependencies required to execute the FastAPI demo app
-      - name: Install Application Packages
+      # Runs the app container natively using a lightweight pre-built Python environment
+      - name: Spin Up Application Container
         run: |
-          pip install fastapi uvicorn requests
-
-      # Boot up our simple microservice application, ping it, and check response codes
-      # Boot up our microservice application cleanly, wait for it to listen, and ping it safely
-      - name: Spin Up Application & Test Endpoints
-        run: |
-          echo "Starting the FastAPI server instance on localhost port 8000..."
-          # Cleanly detach uvicorn streams so it runs completely independent of the shell lifecycle
-          nohup uvicorn app:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
+          echo "Building and running the application inside an isolated Docker container..."
+          docker run -d -p 8000:8000 --name fast-app -v ${{ github.workspace }}:/app -w /app python:3.11-slim sh -c "pip install fastapi uvicorn && uvicorn app:app --host 0.0.0.0 --port 8000"
           
-          echo "Waiting for FastAPI server to initialize and listen on port 8000..."
-          # Robust check that pauses until port 8000 is open (max 10 seconds)
-          for i in {1..10}; do
+          echo "Waiting for app to initialize inside container..."
+          for i in {1..15}; do
             if nc -z 127.0.0.1 8000; then
-              echo "FastAPI server is up and listening!"
+              echo "FastAPI container is up and listening on port 8000!"
               break
             fi
-            echo "Port 8000 not ready yet, sleeping 1s..."
+            echo "Port 8000 not active yet, sleeping 1s..."
             sleep 1
           done
-          
-          echo "Printing server startup log telemetry:"
-          cat uvicorn.log
-          
-          echo "Sending verification ping request to app endpoint..."
+
+      - name: Print Container Startup Logs
+        run: docker logs fast-app
+
+      - name: Send Verification Requests
+        run: |
+          echo "Pinging root endpoint..."
           curl -s http://127.0.0
           
-          echo -e "\nSending request to health check route..."
+          echo -e "\nPinging health route..."
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0health)
           echo "Application HTTP Verification Status Code: $HTTP_STATUS"
           
