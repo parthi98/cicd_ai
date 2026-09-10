@@ -99,11 +99,26 @@ jobs:
           pip install fastapi uvicorn requests
 
       # Boot up our simple microservice application, ping it, and check response codes
+      # Boot up our microservice application cleanly, wait for it to listen, and ping it safely
       - name: Spin Up Application & Test Endpoints
         run: |
           echo "Starting the FastAPI server instance on localhost port 8000..."
-          uvicorn app:app --host 127.0.0.1 --port 8000 &
-          sleep 4 # Allow microservice server layers to fully register
+          # Cleanly detach uvicorn streams so it runs completely independent of the shell lifecycle
+          nohup uvicorn app:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
+          
+          echo "Waiting for FastAPI server to initialize and listen on port 8000..."
+          # Robust check that pauses until port 8000 is open (max 10 seconds)
+          for i in {1..10}; do
+            if nc -z 127.0.0.1 8000; then
+              echo "FastAPI server is up and listening!"
+              break
+            fi
+            echo "Port 8000 not ready yet, sleeping 1s..."
+            sleep 1
+          done
+          
+          echo "Printing server startup log telemetry:"
+          cat uvicorn.log
           
           echo "Sending verification ping request to app endpoint..."
           curl -s http://127.0.0
