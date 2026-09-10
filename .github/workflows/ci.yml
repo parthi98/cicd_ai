@@ -8,7 +8,7 @@ on:
 
 jobs:
   # ─────────────────────────────────────────────────────────────
-  # STAGE 1: CORE APPLICATION BUILD & TELEMETRY
+  # STAGE 1: CORE PIPELINE LOG CAPTURE
   # ─────────────────────────────────────────────────────────────
   execute-build:
     name: "Stage 1: Application Build"
@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Creates output log framework cleanly for analysis
+      # Maintains the baseline error structure for the AI agent to evaluate
       - name: Compile and Verify Dependencies
         id: run_build
         run: |
@@ -59,6 +59,7 @@ jobs:
         with:
           python-version: '3.11'
 
+      # Downloads the telemetry log string from Stage 1
       - name: Download Build Log Telemetry
         uses: actions/download-artifact@v4
         with:
@@ -70,54 +71,49 @@ jobs:
           sleep 5
           docker exec ollama ollama pull qwen2.5-coder:7b
 
-      # Analyzes the logs completely free inside the runner frame
       - name: Execute Open Source Log Optimization Agent
         run: |
           python .github/scripts/analyze_logs.py build_output.log > ai_suggestions.md
           cat ai_suggestions.md >> $GITHUB_STEP_SUMMARY
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 3: APPLICATION HEALTH VERIFICATION (DOCKER CAPTURE)
+  # STAGE 3: JAVA APP COMPILATION & SMOKE VERIFICATION
   # ─────────────────────────────────────────────────────────────
-  run-app-test:
-    name: "Stage 3: App Smoke Verification"
+  run-java-test:
+    name: "Stage 3: Java App Verification"
     runs-on: ubuntu-latest
-    needs: ai-analysis
+    needs: ai-analysis # Stage 3 executes after the AI analytics job finishes
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Runs the app container natively using a lightweight pre-built Python environment
-      - name: Spin Up Application Container
-        run: |
-          echo "Building and running the application inside an isolated Docker container..."
-          docker run -d -p 8000:8000 --name fast-app -v ${{ github.workspace }}:/app -w /app python:3.11-slim sh -c "pip install fastapi uvicorn && uvicorn app:app --host 0.0.0.0 --port 8000"
-          
-          echo "Waiting for app to initialize inside container..."
-          for i in {1..15}; do
-            if nc -z 127.0.0.1 8000; then
-              echo "FastAPI container is up and listening on port 8000!"
-              break
-            fi
-            echo "Port 8000 not active yet, sleeping 1s..."
-            sleep 1
-          done
+      # Sets up standard Java JDK environment securely inside the runner container
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-      - name: Print Container Startup Logs
-        run: docker logs fast-app
-
-      - name: Send Verification Requests
+      # Compiles the standalone Java class bytecode natively
+      - name: Compile Java Application
         run: |
-          echo "Pinging root endpoint..."
-          curl -s http://127.0.0
+          echo "Compiling App.java..."
+          javac App.java
+
+      # Executes the app file directly and catches the standard output streams
+      - name: Execute Java App Smoke Verification
+        run: |
+          echo "Executing compiled class application file..."
+          java App > java_execution.log 2>&1
+          cat java_execution.log
           
-          echo -e "\nPinging health route..."
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0health)
-          echo "Application HTTP Verification Status Code: $HTTP_STATUS"
-          
-          if [ "$HTTP_STATUS" -eq 200 ]; then
-            echo "### ✅ Stage 3 Complete: Application is Online & Healthy!" >> $GITHUB_STEP_SUMMARY
+          # Inject status feedback text summary back to the main actions console view
+          if [ -f App.class ]; then
+            echo "### ✅ Stage 3 Complete: Java App Compiled and Verified Successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`text" >> $GITHUB_STEP_SUMMARY
+            cat java_execution.log >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           else
-            echo "### ❌ Stage 3 Failed: Service returned abnormal status code $HTTP_STATUS" >> $GITHUB_STEP_SUMMARY
+            echo "### ❌ Stage 3 Failed: Java execution compilation error." >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
