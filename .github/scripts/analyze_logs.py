@@ -17,25 +17,40 @@ def analyze_logs(log_file_path):
     Analyze the following CI/CD build log. Identify bottlenecks, slow steps, 
     caching inefficiencies, or compilation errors. 
     
-    Provide your output formatted strictly in Clean Markdown with two clear sections:
-    1. ### 🚀 Performance Bottlenecks / Errors Identified
-    2. ### 💡 Actionable Optimization Suggestions
+    You MUST format your output into separate stages using Markdown dividers (---).
+    Use this exact structural layout:
+
+    # 📊 CI/CD BUILD EXTRACTION SUMMARY
     
-    Build Log Snippet:
+    ---
+    
+    ## 🔍 STAGE 1: LOG ANALYTICS & ERRORS IDENTIFIED
+    * **Status:** [State if build succeeded or had explicit compile errors]
+    * **Primary Logs Evaluated:** [Briefly note what the log snippet shows]
+    
+    ---
+    
+    ## 🚀 STAGE 2: PERFORMANCE BOTTLENECKS
+    * **Slow Step Found:** [Detail the specific slow library or network tracking metrics found]
+    * **Impact Level:** [High / Medium / Low bottleneck footprint]
+    
+    ---
+    
+    ## 💡 STAGE 3: ACTIONABLE OPTIMIZATION PLAYBOOK
+    * **Caching Strategy:** [Detail exact cache setup recommendations]
+    * **Workflow Speed Changes:** [Detail step improvements or parallel configurations]
+    
+    Build Log Snippet to Analyze:
     \"\"\"
     {log_content}
     \"\"\"
     """
 
-    # POINTING TO LOCAL OLLAMA CONNECTION
     host = "127.0.0.1"
     port = 11434
     path = "/api/generate"
     
-    headers = {
-        "Content-Type": "application/json"
-    }
-    
+    headers = {"Content-Type": "application/json"}
     payload = {
         "model": "qwen2.5-coder:7b",
         "prompt": prompt,
@@ -50,20 +65,15 @@ def analyze_logs(log_file_path):
         conn.close()
 
         result = json.loads(data)
-        
         if 'response' in result:
-            markdown_output = result['response']
-            print(markdown_output)
+            print(result['response'])
         else:
-            print("### ⚠️ AI Engine Note\nLocal open-source model connected, but returned empty content mapping.")
-            print(f"Debug Info: {data}")
-            
+            print("### ⚠️ AI Engine Note\nReturned empty content mapping.")
     except Exception as e:
-        print(f"### ❌ Local AI Analysis Failed\nAn error occurred during local model processing: {str(e)}")
+        print(f"### ❌ Local AI Analysis Failed\nError: {str(e)}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python analyze_logs.py <path_to_log_file>")
         sys.exit(1)
-    # Safely extract target string parameter
     analyze_logs(sys.argv[1])
