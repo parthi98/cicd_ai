@@ -7,26 +7,22 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-analyze:
+  # ─────────────────────────────────────────────────────────────
+  # STAGE 1: CORE APPLICATION BUILD & TESTING
+  # ─────────────────────────────────────────────────────────────
+  execute-build:
+    name: "Stage 1: Application Build"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python Environment
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # Launch Ollama instantly using Docker (guaranteed to work without installation crashes)
-      - name: Run Ollama via Docker
-        run: |
-          docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
-          sleep 5
-          docker exec ollama ollama pull qwen2.5-coder:7b
-
-      # Guarantees the build log file exists for the analyzer script
-      - name: Execute Application Build
+      - name: Compile and Verify Dependencies
         id: run_build
         run: |
           echo "Starting application build dependency validation..." > build_output.log
@@ -38,8 +34,46 @@ jobs:
           cat build_output.log
         continue-on-error: true
 
-      - name: Run Open Source Log Optimization Agent
-        if: always()
+      # Upload the logs as an artifact so Stage 2 can download and read them
+      - name: Archive Build Log Telemetry
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-artifact
+          path: build_output.log
+          retention-days: 1
+
+  # ─────────────────────────────────────────────────────────────
+  # STAGE 2: AI OPTIMIZATION ANALYSIS
+  # ─────────────────────────────────────────────────────────────
+  ai-analysis:
+    name: "Stage 2: GenAI Performance Analytics"
+    runs-on: ubuntu-latest
+    needs: execute-build # Guarantees Stage 2 waits for Stage 1 to finish completely [1]
+    if: always()        # Ensures the AI analysis runs even if Stage 1 failed [2]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Download the captured log file generated during Stage 1
+      - name: Download Build Log Telemetry
+        uses: actions/download-artifact@v4
+        with:
+          name: build-log-artifact
+
+      # Launch isolated local AI environment via Docker container
+      - name: Initialize Dockerized Ollama Engine
+        run: |
+          docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+          sleep 5
+          docker exec ollama ollama pull qwen2.5-coder:7b
+
+      # Run the parser script against the downloaded log string
+      - name: Execute Open Source Log Optimization Agent
         run: |
           python .github/scripts/analyze_logs.py build_output.log > ai_suggestions.md
           cat ai_suggestions.md >> $GITHUB_STEP_SUMMARY
